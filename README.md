@@ -1,34 +1,50 @@
 # Obtaining the MSISDN
-## Getting it from the SIM card
-## MO SMS
-## MO Call ?
-## Asking the user
+### Getting it from the SIM card
+It is possible to obtain the MSISDN from the SIM card if this value is filled by the operator. However, this is not the general case and many operators doesn't write this value to the SIM. In any case, even if it is available this field can be modified by the user at any time and so it cannot be trusted without a proper verification.
+
+### SMS-MO
+Another mechanism to obtain the MSISDN is by asking the device to send an SMS-MO (Mobile Originated) to a specific phone number or short code. This requires support from the operator in order to make sure that the SMS is charge free for the user.
+
+### Call-MO ?
+
+### Asking the user
+This is the fallback if all the above options are not available.
 
 # Verification mechanisms
-## Network based authentication
-## SMS based authentication
-### MT only
-### MO and MT
-## Telephony call based authentication
+### Network based authentication
+Some operators may support a network based authentication mechanism where the device is authenticated by making an http request to the authentication server over the device's mobile data connection such that the carrier injects a header which contains a token that can be used to verify the users MSISDN.
+
+This kind of authentication mechanism does not require us to provide an MSISDN in advance and so the whole flow can be done without user interaction.
+
+### SMS based authentication
+#### SMS-MT only
+In an SMS-MT (Mobile Terminated) only based authentication the verification server is given an MSISDN to send an SMS with a verification code and the device makes an http request to give the verification code back to the server as a proof of ownership.
+
+This requires us to provide an MSISDN in advance and so the flow might require user interaction.
+
+It is also possible that the given MSISDN does not belong to the device from where the requests to the verification server are done and so the SMS will be receive by another device. In that case, the user will required to manually enter the verification code. This is the scenario for an MSISDN verification triggered by a desktop client.
+
+#### SMS-MO and SMS-MT
+In an SMS-MO (Mobile Originated) + SMS-MT (Mobile Terminated) based authentication, the device sends an SMS to the verification server which replies back with a SMS verification code that must be given back to the server as a proof of ownership.
+
+This mechanism does not require us to provide an MSISDN in advance and so the flow can be done without user interaction.
+
+This flow requires support from the operator to assure that the phone number or the short code that the device uses to send the SMS-MO is free of charge for the user.
+
+### Telephony call based authentication
 
 # API Endpoints
   * [POST /v1/msisdn/register](#post-v1msisdnregister)
-  * [POST /v1/msisdn/unregister](#post-v1msisdnunregister)
-  * [POST /v1/msisdn/network/verify](#post-v1msisdnnetworkverify)
-  * [POST /v1/msisdn/telephony/verify](#post-v1msisdntelephonyverify)
-  * [POST /v1/msisdn/sms/verify](#post-v1msisdnsmsverify)
-  * [POST /v1/msisdn/sms/verify_code](#post-v1msisdnverify_code)
-  * [POST /v1/msisdn/sms/resend_code](#post-v1msisdnresend_code)
+  * [POST /v1/msisdn/unregister](#post-v1msisdnunregister) :lock:
+  * [POST /v1/msisdn/network/verify](#post-v1msisdnnetworkverify) :lock:
+  * [POST /v1/msisdn/telephony/verify](#post-v1msisdntelephonyverify) :lock:
+  * [POST /v1/msisdn/sms/verify](#post-v1msisdnsmsverify) :lock:
+  * [POST /v1/msisdn/sms/verify_code](#post-v1msisdnverify_code) :lock:
+  * [POST /v1/msisdn/sms/resend_code](#post-v1msisdnresend_code) :lock:
 
 ## POST /v1/msisdn/register
 
 Starts the registration of a MSISDN in E.164 format. The verification service checks the available verification mechanism according to the given network information (mcc, mnc and roaming) and replies back with a session token and a verification URL corresponding to the chosen verification mechanism.
-
-___Parameters___
-* msisdn - a MSISDN in E.164 format
-* mcc - [Mobile Country Code](http://es.wikipedia.org/wiki/MCC/MNC)
-* mnc - [Mobile Network Code](http://es.wikipedia.org/wiki/MCC/MNC)
-* roaming - boolean that indicates if the device is on roaming or not
 
 ### Request
 
@@ -45,6 +61,12 @@ curl -v \
 }'
 ```
 
+___Parameters___
+* `msisdn` - a MSISDN in E.164 format
+* `mcc` - [Mobile Country Code](http://es.wikipedia.org/wiki/MCC/MNC)
+* `mnc` - [Mobile Network Code](http://es.wikipedia.org/wiki/MCC/MNC)
+* `roaming` - boolean that indicates if the device is on roaming or not
+
 ### Response
 
 Successful requests will produce a "200 OK" response with following format:
@@ -55,11 +77,52 @@ Successful requests will produce a "200 OK" response with following format:
   "verificationUrl": "https://api.accounts.firefox.com/v1/msisdn/sms/verify"
 }
 ```
-## POST /v1/msisdn/network/verify
+
+___Parameters___
+
+* `msisdnSessionToken` - [HAWK](https://github.com/hueniverse/hawk) shared key.
+* `verificationUrl` - Endpoint corresponding to the available verification mechanism that the client should use to start the verification process.
+
+## POST /v1/msisdn/unregister
+
+:lock: HAWK-authenticated with a `msisdnSessionToken`.
+
+This completely removes a previously registered MSISDN.
 
 ### Request
 
+The request must include a Hawk header that authenticates the request (including payload) using a `msisdnSessionToken` received from `/v1/msisdn/register`.
+
+```sh
+curl -v \
+-X POST \
+-H "Content-Type: application/json" \
+"https://api.accounts.firefox.com/v1/msisdn/unregister" \
+-H 'Authorization: Hawk id="d4c5b1e3f5791ef83896c27519979b93a45e6d0da34c7509c5632ac35b28b48d", ts="1373391043", nonce="ohQjqb", hash="vBODPWhDhiRWM4tmI9qp+np+3aoqEFzdGuGk0h7bh9w=", mac="LAnpP3P2PXelC6hUoUaHP72nCqY5Iibaa3eeiGBqIIU="' \
+-d '{
+  "msisdn": "+442071838750"
+}'
+```
+
+___Parameters___
+* msisdn - a MSISDN in E.164 format
+
+### Response
+
+Successful requests will produce a "200 OK" response with following format:
+
+```json
+{}
+```
+
+## POST /v1/msisdn/network/verify
 :lock: HAWK-authenticated with a `msisdnSessionToken`.
+
+The server is given a public key, and returns a signed certificate using the same JWT-like mechanism as a BrowserID primary IdP would (see the [browserid-certifier project](https://github.com/mozilla/browserid-certifier for details)). The signed certificate includes a `principal.email` property to indicate a "Firefox Account-like" identifier (a uuid at the account server's primary domain). TODO: add discussion about how this id will likely *not* be stable for repeated calls to this endpoint with the same MSISDN (alone), but probably stable for repeated calls with the same MSISDN+`msisdnSessionToken`.
+
+### Request
+
+The request must include a Hawk header that authenticates the request (including payload) using a `msisdnSessionToken` received from `/v1/msisdn/register`.
 
 ```sh
 curl -v \
@@ -67,8 +130,26 @@ curl -v \
 -H "Content-Type: application/json" \
 "https://api.accounts.firefox.com/v1/msisdn/network/verify" \
 -H 'Authorization: Hawk id="d4c5b1e3f5791ef83896c27519979b93a45e6d0da34c7509c5632ac35b28b48d", ts="1373391043", nonce="ohQjqb", hash="vBODPWhDhiRWM4tmI9qp+np+3aoqEFzdGuGk0h7bh9w=", mac="LAnpP3P2PXelC6hUoUaHP72nCqY5Iibaa3eeiGBqIIU="' \
--d '{}'
+-d '{
+ "publicKey": {
+    "algorithm":"RS",
+    "n":"4759385967235610503571494339196749614544606692567785790953934768202714280652973091341316862993582789079872007974809511698859885077002492642203267408776123",
+    "e":"65537"
+  },
+  "duration": 86400000
+}'
 ```
+
+__Parameters__
+* publicKey - the key to sign (run `bin/generate-keypair` from [jwcrypto](https://github.com/mozilla/jwcrypto))
+    * algorithm - "RS" or "DS"
+    * n - RS only
+    * e - RS only
+    * y - DS only
+    * p - DS only
+    * q - DS only
+    * g - DS only
+* duration - time interval from now when the certificate will expire in seconds
 
 ### Response
 
@@ -87,30 +168,40 @@ The signed certificate includes these additional claims:
 
 ## POST /v1/msisdn/telephony/verify
 
-:lock: HAWK-authenticated with a `msisdnSessionToken`.
-
 ## POST /v1/msisdn/sms/verify
 
+### Request
+
 :lock: HAWK-authenticated with a `msisdnSessionToken`.
+
+```sh
+curl -v \
+-X POST \
+-H "Content-Type: application/json" \
+"https://api.accounts.firefox.com/v1/msisdn/sms/verify" \
+-H 'Authorization: Hawk id="d4c5b1e3f5791ef83896c27519979b93a45e6d0da34c7509c5632ac35b28b48d", ts="1373391043", nonce="ohQjqb", hash="vBODPWhDhiRWM4tmI9qp+np+3aoqEFzdGuGk0h7bh9w=", mac="LAnpP3P2PXelC6hUoUaHP72nCqY5Iibaa3eeiGBqIIU="' \
+-d '{}'
+```
+
+### Response
+
+Successful requests will produce a "200 OK" response with following format:
+
+```json
+{
+  "mtNumber": "123",
+  "moNumber": "234"
+}
+```
+___Parameters___
+* `mtNumber` - Phone number or short code that the server will use to send the verification SMS. This is useful for the client to silence the reception of the SMS.
+* `moNumber` - Phone number or short code that the device will use to send a first verification SMS in an MO+MT flow. If the authentication flow is an SMS MT only this parameter won't be contained in the response.
 
 ## POST /v1/msisdn/sms/verify_code
 
 :lock: HAWK-authenticated with a `msisdnSessionToken`.
 
 This verifies the SMS code sent to a MSISDN. The server is given a public key, and returns a signed certificate using the same JWT-like mechanism as a BrowserID primary IdP would (see the [browserid-certifier project](https://github.com/mozilla/browserid-certifier for details)). The signed certificate includes a `principal.email` property to indicate a "Firefox Account-like" identifier (a uuid at the account server's primary domain). TODO: add discussion about how this id will likely *not* be stable for repeated calls to this endpoint with the same MSISDN (alone), but probably stable for repeated calls with the same MSISDN+`msisdnSessionToken`.
-
-___Parameters___
-* msisdn - a MSISDN in E.164 format
-* code - the SMS verification code sent to the MSISDN
-* publicKey - the key to sign (run `bin/generate-keypair` from [jwcrypto](https://github.com/mozilla/jwcrypto))
-    * algorithm - "RS" or "DS"
-    * n - RS only
-    * e - RS only
-    * y - DS only
-    * p - DS only
-    * q - DS only
-    * g - DS only
-* duration - time interval from now when the certificate will expire in seconds
 
 ### Request
 
@@ -124,7 +215,7 @@ curl -v \
 -H 'Authorization: Hawk id="d4c5b1e3f5791ef83896c27519979b93a45e6d0da34c7509c5632ac35b28b48d", ts="1373391043", nonce="ohQjqb", hash="vBODPWhDhiRWM4tmI9qp+np+3aoqEFzdGuGk0h7bh9w=", mac="LAnpP3P2PXelC6hUoUaHP72nCqY5Iibaa3eeiGBqIIU="' \
 -d '{
   "msisdn": "+442071838750",
-  "code": "e3c5b0e3f5391e134596c27519979b93a45e6d0da34c7509c5632ac35b28b48d",
+  "code": "e3c5b",
   "publicKey": {
     "algorithm":"RS",
     "n":"4759385967235610503571494339196749614544606692567785790953934768202714280652973091341316862993582789079872007974809511698859885077002492642203267408776123",
@@ -133,6 +224,19 @@ curl -v \
   "duration": 86400000
 }'
 ```
+
+___Parameters___
+* msisdn - a MSISDN in E.164 format
+* code - the SMS verification code sent to the MSISDN
+* publicKey - the key to sign (run `bin/generate-keypair` from [jwcrypto](https://github.com/mozilla/jwcrypto))
+    * algorithm - "RS" or "DS"
+    * n - RS only
+    * e - RS only
+    * y - DS only
+    * p - DS only
+    * q - DS only
+    * g - DS only
+* duration - time interval from now when the certificate will expire in seconds
 
 ### Response
 
@@ -155,9 +259,6 @@ The signed certificate includes these additional claims:
 
 This triggers the sending of an SMS code the MSISDN registered in /v1/msisdn/register. 
 
-___Parameters___
-* msisdn - a MSISDN in E.164 format
-
 ### Request
 
 The request must include a Hawk header that authenticates the request (including payload) using a `msisdnSessionToken` received from `/v1/msisdn/register`.
@@ -172,38 +273,8 @@ curl -v \
   "msisdn": "+442071838750"
 }'
 ```
-
-### Response
-
-Successful requests will produce a "200 OK" response with following format:
-
-```json
-{}
-```
-
-## POST /v1/msisdn/unregister
-
-:lock: HAWK-authenticated with a `msisdnSessionToken`.
-
-This completely removes a previously registered MSISDN.
-
 ___Parameters___
 * msisdn - a MSISDN in E.164 format
-
-### Request
-
-The request must include a Hawk header that authenticates the request (including payload) using a `msisdnSessionToken` received from `/v1/msisdn/register`.
-
-```sh
-curl -v \
--X POST \
--H "Content-Type: application/json" \
-"https://api.accounts.firefox.com/v1/msisdn/unregister" \
--H 'Authorization: Hawk id="d4c5b1e3f5791ef83896c27519979b93a45e6d0da34c7509c5632ac35b28b48d", ts="1373391043", nonce="ohQjqb", hash="vBODPWhDhiRWM4tmI9qp+np+3aoqEFzdGuGk0h7bh9w=", mac="LAnpP3P2PXelC6hUoUaHP72nCqY5Iibaa3eeiGBqIIU="' \
--d '{
-  "msisdn": "+442071838750"
-}'
-```
 
 ### Response
 
