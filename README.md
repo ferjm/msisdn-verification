@@ -209,7 +209,7 @@ The request must include a Hawk header that authenticates the request (including
 curl -v \
 -X POST \
 -H "Content-Type: application/json" \
-"https://api.accounts.firefox.com/v1/msisdn/verify_code" \
+"https://api.accounts.firefox.com/v1/msisdn/sms/verify_code" \
 -H 'Authorization: Hawk id="d4c5b1e3f5791ef83896c27519979b93a45e6d0da34c7509c5632ac35b28b48d", ts="1373391043", nonce="ohQjqb", hash="vBODPWhDhiRWM4tmI9qp+np+3aoqEFzdGuGk0h7bh9w=", mac="LAnpP3P2PXelC6hUoUaHP72nCqY5Iibaa3eeiGBqIIU="' \
 -d '{
   "msisdn": "+442071838750",
@@ -224,9 +224,9 @@ curl -v \
 ```
 
 ___Parameters___
-* msisdn - a MSISDN in E.164 format
-* code - the SMS verification code sent to the MSISDN
-* publicKey - the key to sign (run `bin/generate-keypair` from [jwcrypto](https://github.com/mozilla/jwcrypto))
+* `msisdn` - a MSISDN in E.164 format
+* `code` - the SMS verification code sent to the MSISDN
+* `publicKey` - the key to sign (run `bin/generate-keypair` from [jwcrypto](https://github.com/mozilla/jwcrypto))
     * algorithm - "RS" or "DS"
     * n - RS only
     * e - RS only
@@ -234,7 +234,7 @@ ___Parameters___
     * p - DS only
     * q - DS only
     * g - DS only
-* duration - time interval from now when the certificate will expire in seconds
+* `duration` - time interval from now when the certificate will expire in seconds
 
 ### Response
 
@@ -265,14 +265,14 @@ The request must include a Hawk header that authenticates the request (including
 curl -v \
 -X POST \
 -H "Content-Type: application/json" \
-"https://api.accounts.firefox.com/v1/msisdn/resend_code" \
+"https://api.accounts.firefox.com/v1/msisdn/sms/resend_code" \
 -H 'Authorization: Hawk id="d4c5b1e3f5791ef83896c27519979b93a45e6d0da34c7509c5632ac35b28b48d", ts="1373391043", nonce="ohQjqb", hash="vBODPWhDhiRWM4tmI9qp+np+3aoqEFzdGuGk0h7bh9w=", mac="LAnpP3P2PXelC6hUoUaHP72nCqY5Iibaa3eeiGBqIIU="' \
 -d '{
   "msisdn": "+442071838750"
 }'
 ```
 ___Parameters___
-* msisdn - a MSISDN in E.164 format
+* `msisdn` - a MSISDN in E.164 format
 
 ### Response
 
