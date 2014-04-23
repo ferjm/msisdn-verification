@@ -78,7 +78,7 @@ Successful requests will produce a "200 OK" response with following format:
 
 ___Parameters___
 
-* `msisdnSessionToken` - [HAWK](https://github.com/hueniverse/hawk) shared key.
+* `msisdnSessionToken`
 * `verificationUrl` - Endpoint corresponding to the available verification mechanism that the client should use to start the verification process.
 
 ## POST /v1/msisdn/unregister
