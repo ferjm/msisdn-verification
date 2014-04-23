@@ -5,8 +5,6 @@ It is possible to obtain the MSISDN from the SIM card if this value is filled by
 ### SMS-MO
 Another mechanism to obtain the MSISDN is by asking the device to send an SMS-MO (Mobile Originated) to a specific phone number or short code. This requires support from the operator in order to make sure that the SMS is charge free for the user.
 
-### Call-MO ?
-
 ### Asking the user
 This is the fallback if all the above options are not available.
 
