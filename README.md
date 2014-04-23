@@ -20,7 +20,7 @@ In an SMS-MT (Mobile Terminated) only based authentication the verification serv
 
 This requires us to provide an MSISDN in advance and so the flow might require user interaction.
 
-It is also possible that the given MSISDN does not belong to the device from where the requests to the verification server are done and so the SMS will be receive by another device. In that case, the user will required to manually enter the verification code. This is the scenario for an MSISDN verification triggered by a desktop client.
+It is also possible that the given MSISDN does not belong to the device from where the requests to the verification server are done and so the SMS will be receive by another device. In that case, the user will need to manually enter the verification code. This is the scenario for an MSISDN verification triggered by a desktop client.
 
 #### SMS-MO and SMS-MT
 In an SMS-MO (Mobile Originated) + SMS-MT (Mobile Terminated) based authentication, the device sends an SMS to the verification server which replies back with a SMS verification code that must be given back to the server as a proof of ownership.
